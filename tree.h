@@ -1,57 +1,59 @@
 //-----------------------------------------------------------
-//  Purpose:    Header file for the BinaryTree class.
+// A binary search tree of baby-name records, keyed by name.
 //-----------------------------------------------------------
+#pragma once
 
-#include <iostream>
-#include <fstream>
+#include <cstddef>
+#include <memory>
+#include <optional>
 #include <string>
-using namespace std;
+#include <vector>
 
-//-----------------------------------------------------------
-// BinaryTree data node definition
-//-----------------------------------------------------------
-class Node
-{
- public:
-   string Name;
-   int Count;
-   float Percentage;
-   int Rank;
-   Node *Left;
-   Node *Right;
+// One row of the names dataset.
+struct NameRecord {
+    std::string name;
+    int count = 0;
+    double percentage = 0.0;
+    int rank = 0;
 };
 
-//-----------------------------------------------------------
-// Define the BinaryTree class interface 
-//-----------------------------------------------------------
-class BinaryTree
-{
- public:
-   // Constructor functions
-   BinaryTree();
-   BinaryTree(char *Name);
-   BinaryTree(const BinaryTree & tree);
-  ~BinaryTree();
+class BinaryTree {
+public:
+    BinaryTree() = default;
+    ~BinaryTree() = default;                       // unique_ptr frees the whole tree
 
-   // General binary tree operations
-   void Read(string name);
-   bool Search(string name, int &count, float &percent, int &rank);
-   bool Insert(string name, int count, float percent, int rank);
-   bool Delete(string name);
-   void Print();
-   void Print(ofstream & dout);
+    BinaryTree(const BinaryTree& other);           // deep copy
+    BinaryTree& operator=(const BinaryTree& other);
+    BinaryTree(BinaryTree&&) noexcept = default;
+    BinaryTree& operator=(BinaryTree&&) noexcept = default;
 
- private:
-   // Helper functions
-   void CopyHelper(Node * Tree1, Node * &Tree2);
-   void DestroyHelper(Node * Tree);
-   bool SearchHelper(string name, int &count, float &percent, int &rank, Node * &Tree);
-   bool InsertHelper(string name, int count, float percent, int rank, Node * &Tree);
-   bool DeleteNode(Node * &Tree);
-   bool DeleteHelper(string name, Node * &Tree);
-   void PrintHelper(Node * Tree);
-   void PrintHelper(Node * Tree, ofstream & dout);
+    // Insert a record. Returns false (and leaves the tree unchanged) if a record
+    // with the same name already exists.
+    bool insert(const NameRecord& record);
 
-   // Tree pointer
-   Node *Root;
+    // Find a record by exact name.
+    std::optional<NameRecord> search(const std::string& name) const;
+
+    // Remove a record by name. Returns false if the name was not found.
+    bool remove(const std::string& name);
+
+    std::size_t size() const { return size_; }
+    bool empty() const { return size_ == 0; }
+
+    // All records in alphabetical order (in-order traversal).
+    std::vector<NameRecord> inOrder() const;
+
+private:
+    struct Node {
+        explicit Node(const NameRecord& r) : record(r) {}
+        NameRecord record;
+        std::unique_ptr<Node> left;
+        std::unique_ptr<Node> right;
+    };
+
+    static std::unique_ptr<Node> clone(const Node* node);
+    static void collect(const Node* node, std::vector<NameRecord>& out);
+
+    std::unique_ptr<Node> root_;
+    std::size_t size_ = 0;
 };

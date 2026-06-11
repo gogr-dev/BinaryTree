@@ -1,0 +1,10 @@
+# Build artifacts
+names
+test_tree
+*.o
+*.dSYM/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
